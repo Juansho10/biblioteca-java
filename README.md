@@ -1,18 +1,28 @@
-## Getting Started
+# 📚 Sistema de Gestión de Biblioteca
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+Este es un proyecto de escritorio desarrollado en Java usando **Swing** para la interfaz gráfica.  
+Permite a los usuarios buscar libros, prestar libros y devolver libros de forma sencilla.
 
-## Folder Structure
+## Funcionalidades
 
-The workspace contains two folders by default, where:
+- 🔍 Buscar libros disponibles por título.
+- 📖 Solicitar el préstamo de un libro.
+- 📘 Devolver libros prestados.
+- 🧑 Registro y autenticación de usuarios.
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
+## Tecnologías usadas
 
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+- Java
+- Swing (Interfaz gráfica)
+- Git (Control de versiones)
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+## Cómo ejecutar el proyecto
 
-## Dependency Management
+1. Clona el repositorio:
 
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
+```bash
+git clone https://github.com/Juansho10/biblioteca-java.git
+
+Nota: No se usa una base de datos externa en esta versión. Todos los datos se mantienen en memoria.
+
+Autor: JP
