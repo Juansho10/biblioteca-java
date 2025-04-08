@@ -20,7 +20,7 @@ Permite a los usuarios buscar libros, prestar libros y devolver libros de forma 
 
 1. Clona el repositorio:
 
-```bash
+```bash 
 git clone https://github.com/Juansho10/biblioteca-java.git
 
 Nota: No se usa una base de datos externa en esta versión. Todos los datos se mantienen en memoria.
