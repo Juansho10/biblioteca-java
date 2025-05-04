@@ -1,71 +1,130 @@
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Clase encargada de gestionar los libros disponibles en el sistema.
- * Utiliza un ArrayList como estructura de datos para almacenar los libros.
+ * Clase GestorLibros que gestiona la colección de libros utilizando un árbol binario de búsqueda.
+ * Permite agregar, buscar y obtener libros disponibles.
  */
 public class GestorLibros {
-    private ArrayList<Libro> libros = new ArrayList<>();
+    private NodoLibro raiz;
 
     /**
-     * Constructor que inicializa la biblioteca con una lista predefinida de libros.
+     * Constructor de la clase GestorLibros.
+     * Inicializa el árbol binario de búsqueda vacío.
      */
     public GestorLibros() {
-        agregarLibro("Cien años de soledad", "Gabriel García Márquez");
-        agregarLibro("1984", "George Orwell");
-        agregarLibro("El Principito", "Antoine de Saint-Exupéry");
-        agregarLibro("Don Quijote de la Mancha", "Miguel de Cervantes");
-        agregarLibro("Harry Potter y la piedra filosofal", "J.K. Rowling");
+        this.raiz = null;
     }
 
     /**
-     * Agrega un nuevo libro a la biblioteca.
-     *
-     * @param titulo Título del libro.
-     * @param autor Autor del libro.
+     * Agrega un nuevo libro al árbol binario de búsqueda.
+     * @param libro El libro que se desea agregar.
      */
-    public void agregarLibro(String titulo, String autor) {
-        libros.add(new Libro(titulo, autor));
+    public void agregarLibro(Libro libro) {
+        raiz = insertar(raiz, libro);
     }
 
     /**
-     * Busca libros cuyo título o autor coincida con una palabra clave.
-     *
-     * @param palabraClave Término de búsqueda.
-     * @return Lista de libros que coinciden con la búsqueda.
+     * Método recursivo para insertar un libro en el árbol binario de búsqueda.
+     * @param nodo El nodo actual del árbol.
+     * @param libro El libro a insertar.
+     * @return El nodo actualizado.
      */
-    public ArrayList<Libro> buscarLibro(String palabraClave) {
-        ArrayList<Libro> resultados = new ArrayList<>();
-        for (Libro libro : libros) {
-            if (libro.getTitulo().toLowerCase().contains(palabraClave.toLowerCase()) ||
-                libro.getAutor().toLowerCase().contains(palabraClave.toLowerCase())) {
-                resultados.add(libro);
-            }
+    private NodoLibro insertar(NodoLibro nodo, Libro libro) {
+        if (nodo == null) {
+            return new NodoLibro(libro);
         }
-        return resultados;
+
+        // Compara el título del libro con el nodo actual.
+        int comparacion = libro.getTitulo().compareTo(nodo.libro.getTitulo());
+        
+        if (comparacion < 0) {
+            // Si el título del libro es menor, lo insertamos en el subárbol izquierdo.
+            nodo.izquierda = insertar(nodo.izquierda, libro);
+        } else if (comparacion > 0) {
+            // Si el título del libro es mayor, lo insertamos en el subárbol derecho.
+            nodo.derecha = insertar(nodo.derecha, libro);
+        }
+        
+        return nodo;
     }
 
     /**
-     * Retorna la lista completa de libros.
-     *
-     * @return Lista de libros.
+     * Busca un libro en el árbol binario de búsqueda por su título.
+     * @param titulo El título del libro a buscar.
+     * @return El libro encontrado, o null si no existe.
      */
-    public ArrayList<Libro> getLibros() {
+    public Libro buscarLibro(String titulo) {
+        return buscar(raiz, titulo);
+    }
+
+    /**
+     * Método recursivo para buscar un libro por su título.
+     * @param nodo El nodo actual del árbol.
+     * @param titulo El título del libro a buscar.
+     * @return El libro encontrado, o null si no existe.
+     */
+    private Libro buscar(NodoLibro nodo, String titulo) {
+        if (nodo == null) return null;
+
+        int comparacion = titulo.compareTo(nodo.libro.getTitulo());
+        if (comparacion == 0) {
+            return nodo.libro; // Si se encuentra el libro, lo retorna.
+        } else if (comparacion < 0) {
+            // Si el título es menor, busca en el subárbol izquierdo.
+            return buscar(nodo.izquierda, titulo);
+        } else {
+            // Si el título es mayor, busca en el subárbol derecho.
+            return buscar(nodo.derecha, titulo);
+        }
+    }
+
+    /**
+     * Obtiene una lista de libros disponibles en el sistema.
+     * Realiza un recorrido en orden (in-order traversal) para listar los libros disponibles.
+     * @return Una lista de libros disponibles.
+     */
+    public List<Libro> obtenerLibrosDisponibles() {
+        List<Libro> libros = new ArrayList<>();
+        obtenerLibrosDisponiblesInOrden(raiz, libros);
         return libros;
     }
 
     /**
-     * Devuelve una lista con todos los libros que están disponibles para préstamo.
-     *
-     * @return Lista de libros disponibles.
+     * Método recursivo para realizar un recorrido en orden del árbol y obtener los libros disponibles.
+     * @param nodo El nodo actual del árbol.
+     * @param libros La lista donde se agregarán los libros disponibles.
      */
-    public ArrayList<Libro> obtenerLibrosDisponibles() {
-        ArrayList<Libro> disponibles = new ArrayList<>();
-        for (Libro libro : libros) {
-            if (libro.estaDisponible()) {
-                disponibles.add(libro);
+    private void obtenerLibrosDisponiblesInOrden(NodoLibro nodo, List<Libro> libros) {
+        if (nodo != null) {
+            // Primero recorre el subárbol izquierdo.
+            obtenerLibrosDisponiblesInOrden(nodo.izquierda, libros);
+
+            // Si el libro está disponible, lo agrega a la lista.
+            if (nodo.libro.isDisponible()) {
+                libros.add(nodo.libro);
             }
+
+            // Luego recorre el subárbol derecho.
+            obtenerLibrosDisponiblesInOrden(nodo.derecha, libros);
         }
-        return disponibles;
+    }
+
+    /**
+     * Clase interna NodoLibro que representa un nodo en el árbol binario.
+     * Cada nodo contiene un libro y dos referencias a los subárboles izquierdo y derecho.
+     */
+    private static class NodoLibro {
+        Libro libro; // El libro que se almacena en el nodo.
+        NodoLibro izquierda, derecha; // Referencias a los subárboles izquierdo y derecho.
+
+        /**
+         * Constructor de NodoLibro.
+         * @param libro El libro que se va a almacenar en el nodo.
+         */
+        NodoLibro(Libro libro) {
+            this.libro = libro;
+            this.izquierda = this.derecha = null;
+        }
     }
 }

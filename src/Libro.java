@@ -31,6 +31,16 @@ public class Libro {
      */
     public void devolver() { disponible = true; }
 
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+    
+    
+
     /**
      * Representación en texto del libro, indicando su disponibilidad.
      */
