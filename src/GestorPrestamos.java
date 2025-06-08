@@ -2,168 +2,114 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase GestorPrestamos que gestiona los préstamos de libros utilizando un árbol binario de búsqueda.
- * Permite registrar un préstamo, obtener los préstamos activos, los libros prestados por un usuario
- * y devolver libros.
+ * Clase encargada de gestionar los préstamos de libros y registrar las relaciones
+ * entre usuarios y libros mediante un grafo.
  */
 public class GestorPrestamos {
-    private NodoPrestamo raiz;
+    private List<Prestamo> prestamos = new ArrayList<>();
+    private GrafoBiblioteca grafo = new GrafoBiblioteca();
 
     /**
-     * Constructor de la clase GestorPrestamos.
-     * Inicializa el árbol binario de búsqueda vacío.
-     */
-    public GestorPrestamos() {
-        this.raiz = null;
-    }
-
-    /**
-     * Presta un libro a un usuario.
-     * @param usuario El usuario que desea tomar el libro.
-     * @param libro El libro que será prestado.
-     * @return true si el préstamo fue exitoso.
+     * Registra un préstamo si el libro está disponible, y agrega la relación al grafo.
+     *
+     * @param usuario Usuario que solicita el préstamo.
+     * @param libro Libro que desea prestar.
+     * @return true si el préstamo fue exitoso, false si el libro ya está prestado.
      */
     public boolean prestarLibro(Usuario usuario, Libro libro) {
-        Prestamo prestamo = new Prestamo(usuario, libro);
-        raiz = insertar(raiz, prestamo);
-        libro.prestar(); // Asegúrate de que el libro esté marcado como prestado.
+        if (!libro.estaDisponible()) return false;
+
+        libro.prestar();
+        prestamos.add(new Prestamo(usuario, libro));
+
+        NodoGrafo nodoUsuario = new NodoGrafo(usuario);
+        NodoGrafo nodoLibro = new NodoGrafo(libro);
+        grafo.agregarArista(nodoUsuario, nodoLibro);
+
         return true;
     }
 
     /**
-     * Método recursivo para insertar un préstamo en el árbol binario de búsqueda.
-     * Los préstamos se ordenan según el nombre del usuario.
-     * @param nodo El nodo actual del árbol.
-     * @param prestamo El préstamo que se desea insertar.
-     * @return El nodo actualizado.
+     * Devuelve un libro si el préstamo existe y lo elimina de la lista de préstamos.
+     *
+     * @param libro Libro a devolver.
+     * @param usuario Usuario que devuelve el libro.
+     * @return true si se procesó correctamente, false si no se encontró el préstamo.
      */
-    private NodoPrestamo insertar(NodoPrestamo nodo, Prestamo prestamo) {
-        if (nodo == null) {
-            return new NodoPrestamo(prestamo);
+    public boolean devolverLibro(Libro libro, Usuario usuario) {
+        for (Prestamo p : prestamos) {
+            if (p.getUsuario().equals(usuario) && p.getLibro().equals(libro)) {
+                libro.devolver();
+                prestamos.remove(p);
+                // No removemos del grafo para mantener el historial
+                return true;
+            }
         }
-
-        // Compara el nombre del usuario que realiza el préstamo.
-        int comparacion = prestamo.getUsuario().getNombre().compareTo(nodo.prestamo.getUsuario().getNombre());
-        
-        if (comparacion < 0) {
-            // Si el nombre del usuario es menor, lo insertamos en el subárbol izquierdo.
-            nodo.izquierda = insertar(nodo.izquierda, prestamo);
-        } else {
-            // Si el nombre del usuario es mayor o igual, lo insertamos en el subárbol derecho.
-            nodo.derecha = insertar(nodo.derecha, prestamo);
-        }
-        
-        return nodo;
+        return false;
     }
 
     /**
-     * Obtiene una lista de todos los préstamos activos en el sistema.
-     * Realiza un recorrido en orden (in-order traversal) para obtener todos los préstamos.
-     * @return Una lista de préstamos activos.
-     */
-    public List<Prestamo> obtenerPrestamosActivos() {
-        List<Prestamo> prestamos = new ArrayList<>();
-        obtenerPrestamosInOrden(raiz, prestamos);
-        return prestamos;
-    }
-
-    /**
-     * Método recursivo para realizar un recorrido en orden del árbol y agregar los préstamos a la lista.
-     * @param nodo El nodo actual del árbol.
-     * @param lista La lista donde se agregarán los préstamos.
-     */
-    private void obtenerPrestamosInOrden(NodoPrestamo nodo, List<Prestamo> lista) {
-        if (nodo != null) {
-            // Primero recorre el subárbol izquierdo.
-            obtenerPrestamosInOrden(nodo.izquierda, lista);
-
-            // Agrega el préstamo del nodo a la lista.
-            lista.add(nodo.prestamo);
-
-            // Luego recorre el subárbol derecho.
-            obtenerPrestamosInOrden(nodo.derecha, lista);
-        }
-    }
-
-    /**
-     * Obtiene una lista de libros prestados por un usuario específico.
-     * @param usuario El usuario cuyos libros prestados se desean obtener.
-     * @return Una lista de libros prestados por el usuario.
+     * Obtiene la lista de libros prestados por un usuario.
+     *
+     * @param usuario Usuario a consultar.
+     * @return Lista de libros prestados por ese usuario.
      */
     public List<Libro> obtenerLibrosPrestados(Usuario usuario) {
         List<Libro> libros = new ArrayList<>();
-        obtenerLibrosUsuario(raiz, usuario, libros);
+        for (Prestamo p : prestamos) {
+            if (p.getUsuario().equals(usuario)) {
+                libros.add(p.getLibro());
+            }
+        }
         return libros;
     }
 
     /**
-     * Método recursivo para obtener los libros prestados por un usuario en particular.
-     * @param nodo El nodo actual del árbol.
-     * @param usuario El usuario cuyas transacciones de préstamo se desean consultar.
-     * @param libros La lista donde se agregarán los libros prestados.
+     * Lista todos los préstamos activos.
+     *
+     * @return Lista de préstamos.
      */
-    private void obtenerLibrosUsuario(NodoPrestamo nodo, Usuario usuario, List<Libro> libros) {
-        if (nodo != null) {
-            // Recorre el subárbol izquierdo.
-            obtenerLibrosUsuario(nodo.izquierda, usuario, libros);
+    public List<Prestamo> listarPrestamos() {
+        return prestamos;
+    }
 
-            // Si el préstamo corresponde al usuario, agrega el libro a la lista.
-            if (nodo.prestamo.getUsuario().getNombre().equals(usuario.getNombre())) {
-                libros.add(nodo.prestamo.getLibro());
+    /**
+     * Devuelve los préstamos asociados a un usuario.
+     *
+     * @param usuario Usuario a consultar.
+     * @return Lista de préstamos de ese usuario.
+     */
+    public List<Prestamo> prestamosPorUsuario(Usuario usuario) {
+        List<Prestamo> resultado = new ArrayList<>();
+        for (Prestamo p : prestamos) {
+            if (p.getUsuario().equals(usuario)) {
+                resultado.add(p);
             }
-
-            // Recorre el subárbol derecho.
-            obtenerLibrosUsuario(nodo.derecha, usuario, libros);
         }
+        return resultado;
     }
 
     /**
-     * Permite devolver un libro prestado por un usuario.
-     * @param libro El libro que se va a devolver.
-     * @param usuario El usuario que desea devolver el libro.
-     * @return true si la devolución fue exitosa, false si no se encontró el préstamo.
+     * Imprime por consola las relaciones entre usuarios y libros en el grafo.
      */
-    public boolean devolverLibro(Libro libro, Usuario usuario) {
-        return devolverLibroRecursivo(raiz, libro, usuario);
+    public void imprimirRelaciones() {
+        grafo.imprimirRelaciones();
     }
 
     /**
-     * Método recursivo para devolver un libro, buscando el préstamo correspondiente.
-     * @param nodo El nodo actual del árbol.
-     * @param libro El libro que se va a devolver.
-     * @param usuario El usuario que devuelve el libro.
-     * @return true si el libro fue devuelto, false si no se encontró el préstamo.
+     * Devuelve todos los libros relacionados con un usuario usando el grafo.
+     *
+     * @param usuario Usuario a consultar.
+     * @return Lista de libros relacionados.
      */
-    private boolean devolverLibroRecursivo(NodoPrestamo nodo, Libro libro, Usuario usuario) {
-        if (nodo == null) return false;
-
-        // Compara si el libro y el usuario corresponden al préstamo.
-        if (nodo.prestamo.getLibro().getTitulo().equals(libro.getTitulo())
-                && nodo.prestamo.getUsuario().getNombre().equals(usuario.getNombre())) {
-            libro.devolver(); // Marca el libro como devuelto.
-            return true;
+    public List<Libro> obtenerLibrosPorUsuarioDesdeGrafo(Usuario usuario) {
+        List<Libro> relacionados = new ArrayList<>();
+        NodoGrafo nodoUsuario = new NodoGrafo(usuario);
+        for (NodoGrafo ady : grafo.obtenerAdyacentes(nodoUsuario)) {
+            if (ady.getDato() instanceof Libro) {
+                relacionados.add((Libro) ady.getDato());
+            }
         }
-
-        // Busca en los subárboles izquierdo y derecho.
-        return devolverLibroRecursivo(nodo.izquierda, libro, usuario)
-            || devolverLibroRecursivo(nodo.derecha, libro, usuario);
-    }
-
-    /**
-     * Clase interna NodoPrestamo que representa un nodo en el árbol binario.
-     * Cada nodo contiene un préstamo y dos referencias a los subárboles izquierdo y derecho.
-     */
-    private static class NodoPrestamo {
-        Prestamo prestamo; // El préstamo que se almacena en el nodo.
-        NodoPrestamo izquierda, derecha; // Referencias a los subárboles izquierdo y derecho.
-
-        /**
-         * Constructor de NodoPrestamo.
-         * @param prestamo El préstamo que se va a almacenar en el nodo.
-         */
-        NodoPrestamo(Prestamo prestamo) {
-            this.prestamo = prestamo;
-            this.izquierda = this.derecha = null;
-        }
+        return relacionados;
     }
 }
